@@ -28,6 +28,139 @@ export const find = async (fechaInicio, fechaFin, sede) => {
   return orders[0];
 };
 
+export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
+  /* const ordersSeriado = await sequelize.query(`
+  select 
+    to_char(b.fecha_inicio, 'DD/MM/YYYY'),
+    b.cod_cuenta,
+    b.codigo_orden,
+    c.default_code,
+    d.name,
+    a.numero_serie,
+    a.cantidad,
+    b.serie_medidor,
+    b.sector_id 
+  from  hsg_orden_seriados a  
+  inner join hsg_orden b on a.orden_id = b.id 
+  inner join product_product c on a.producto_id = c.id 
+  inner join product_template d on c.product_tmpl_id = d.id
+  where 
+    to_char(b.fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' and
+    to_char(b.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' and 
+    b.sector_id = 10 and
+    c.default_code not in ('16134', '16135')
+  `); */
+  const ordersSeriado = await sequelize.query(`
+  SELECT 
+    subconsulta.fecha as fecha,
+    b.cod_cuenta as cod_cuenta_formato,
+    b.codigo_orden as cod_orden_formato,
+    c.default_code as default_code_formato, 
+    h.name as nombre_formato,
+    a.numero_serie as numero_serie_formato,
+    subconsulta.default_code as default_code_p,
+    subconsulta.name as nombre_p,
+    subconsulta.numero_serie as numero_serie_p,
+    subconsulta.cantidad as cantidad_p,
+    subconsulta.serie_medidor as serie_medidor_p,
+    subconsulta.sector_id as sector
+  FROM hsg_orden_seriados a
+  inner join hsg_orden b on a.orden_id = b.id 
+  inner join product_product c on a.producto_id = c.id
+  inner join product_template h on c.product_tmpl_id = h.id
+  JOIN (
+    select 
+      to_char(e.fecha_inicio, 'DD/MM/YYYY') as fecha,
+      e.cod_cuenta,
+      e.codigo_orden,
+      f.default_code,
+      g.name as name,
+      d.numero_serie,
+      d.cantidad,
+      e.serie_medidor,
+      e.sector_id 
+    from  hsg_orden_seriados d
+    inner join hsg_orden e on d.orden_id = e.id 
+    inner join product_product f on d.producto_id = f.id 
+    inner join product_template g on f.product_tmpl_id = g.id
+    where 
+      to_char(e.fecha_inicio,'YYYY/MM/DD')>='2024/03/27' and
+      to_char(e.fecha_inicio,'YYYY/MM/DD') <='2024/03/27}' and 
+      e.sector_id = 9 and
+      f.default_code not in ('16134', '16135')
+  ) AS subconsulta
+  ON b.codigo_orden = subconsulta.codigo_orden
+  where c.default_code in ('16134', '16135')
+  order by b.codigo_orden ASC;
+  `);
+  /* const ordersNoSeriado = await sequelize.query(`
+  select 
+    to_char(b.fecha_inicio, 'DD/MM/YYYY'),
+    b.cod_cuenta,
+    b.codigo_orden,
+    c.default_code,
+    d.name,
+    NULL AS serie,
+    a.cantidad,
+    b.serie_medidor,
+    b.sector_id 
+  from hsg_orden_productos a  
+  inner join hsg_orden b on a.orden_id = b.id
+  inner join product_product c on a.producto_id = c.id 
+  inner join  product_template d on c.product_tmpl_id = d.id 
+  where 
+    to_char(b.fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' and 
+    to_char(b.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' and 
+    b.sector_id = 10; 
+  `); */
+  const ordersNoSeriado = await sequelize.query(`
+  SELECT 
+    subconsulta.fecha as fecha,
+    b.cod_cuenta as cod_cuenta_formato,
+    b.codigo_orden as cod_orden_formato,
+    c.default_code as default_code_formato, 
+    h.name as nombre_formato,
+    a.numero_serie as numero_serie_formato,
+    subconsulta.default_code as default_code_p,
+    subconsulta.name as nombre_p,
+    NULL AS numero_serie_p,
+    subconsulta.cantidad as cantidad_p,
+    subconsulta.serie_medidor as serie_medidor_p,
+    subconsulta.sector_id as sector
+  FROM hsg_orden_seriados a
+  inner join hsg_orden b on a.orden_id = b.id 
+  inner join product_product c on a.producto_id = c.id
+  inner join product_template h on c.product_tmpl_id = h.id
+  JOIN (
+    select 
+      to_char(e.fecha_inicio, 'DD/MM/YYYY') as fecha,
+      e.cod_cuenta,
+      e.codigo_orden,
+      f.default_code,
+      g.name as name,
+      d.cantidad,
+      e.serie_medidor,
+      e.sector_id 
+    from  hsg_orden_productos d
+    inner join hsg_orden e on d.orden_id = e.id 
+    inner join product_product f on d.producto_id = f.id 
+    inner join product_template g on f.product_tmpl_id = g.id
+    where 
+      to_char(e.fecha_inicio,'YYYY/MM/DD')>='2024/03/27' and
+      to_char(e.fecha_inicio,'YYYY/MM/DD') <='2024/03/27}' and 
+      e.sector_id = 9 and
+      f.default_code not in ('16134', '16135')
+  ) AS subconsulta
+  ON b.codigo_orden = subconsulta.codigo_orden
+  where c.default_code in ('16134', '16135')
+  order by b.codigo_orden ASC;
+  `);
+
+  const data = ordersSeriado[0].concat(ordersNoSeriado[0]);
+
+  return data;
+};
+
 export const findSector = async () => {
   const sector = await sequelize.query(`
     select 

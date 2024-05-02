@@ -1,102 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/img/favicon.png" />
     <link rel="stylesheet" href="/css/main.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <title>Informe de Ejecución</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="flex flex-col min-h-screen sm:px-20 lg:px-52 xl:px-80">
-  
-  <%- include('partials/header.ejs') %>
-  <hr/>
-  <main class="flex flex-col mt-5 gap-2">
-    <form id="formulario" class="flex flex-col items-center gap-5">
-      <div class="w-[450px] gap-5 max-sm:w-[300px]">
-        <div class="flex justify-between items-center gap-2">
-          <label class="text-nowrap">Fecha inicio: </label>
-          <input id="fecha_inicio" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required />
-        </div>
-        <div class="flex justify-between items-center gap-2 mt-3">
-          <label class="text-nowrap">Fecha fin: </label>
-          <input id="fecha_fin" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required />
-        </div>
-        <div class="flex justify-between items-center gap-2 mt-3">
-          <label class="text-nowrap">Sede: </label>
-          <select id="sector" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required>
-            <option selected value="" disabled>-- SELECCIONE UNA SEDE --</option>
-            <% sectores.map((option) => { %>
-              <option
-                value=<%- option.id + "-" + option.name %>
-              >
-                <%= option.name %>
-              </option>
-            <% }) %>
-          </select>
-        </div>
-      </div>
-      <button id="descargar" type="submit" class="text-white flex gap-2 items-center bg-green-600 rounded p-2">
-        Descargar Excel
-        <span class="fas fa-download"></span>
-      </button>
-    </form>
-    <span id="errores" class="w-full text-red-600 text-center pt-5"></span>
-  </main>
-  <script type="module">
-    import xlsx from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
-    const inputFechaInicio = document.getElementById("fecha_inicio");
-    const inputFechaFin = document.getElementById("fecha_fin");
-    const sector = document.getElementById("sector");
-    const formulario = document.getElementById("formulario");
-    const btnDescargar = document.getElementById("descargar");
-    const spanErrores = document.getElementById("errores");
+  </head>
+  <body class="flex flex-col min-h-screen sm:px-20 lg:px-52 xl:px-80">
+    <%- include('partials/header.ejs') %>
+    <hr />
+    <main class="flex flex-col mt-5 gap-2">
+      <%- include('formulario.ejs') %>
+      <span id="errores" class="w-full text-red-600 text-center pt-5"></span>
+    </main>
+    <footer class="fixed bottom-2 left-2 text-slate-400">
+      Derechos Reservados - Hesego Ingeniería S.A.S - v.2
+    </footer>
+    <script type="module">
+      import xlsx from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
+      const inputFechaInicio = document.getElementById("fecha_inicio");
+      const inputFechaFin = document.getElementById("fecha_fin");
+      const sector = document.getElementById("sector");
+      const formulario = document.getElementById("formulario");
+      const btnDescargar = document.getElementById("descargar");
+      const spanErrores = document.getElementById("errores");
 
-    function formateador(fecha) {
-      const data = fecha.split('-').join('/')
+      let estadoInforme = true;
+      const btnEjecucion = document.getElementById("btn-ejecucion");
+      const btnConsumo = document.getElementById("btn-consumo");
 
-      return data
-    }
+      function formateador(fecha) {
+        const data = fecha.split("-").join("/");
 
-    formulario.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const inicio = new Date(inputFechaInicio.value);
-      const fin = new Date(inputFechaFin.value);
-      const [sectorId, sectorName] = sector.value.split('-')
-      
-      if (fin < inicio || fin == "Invalid Date" || inicio == "Invalid Date" || sector == "") {
-        spanErrores.innerHTML = 'La <strong>"Fecha Fin"</strong> no puede ser menor a la <strong>"Fecha Inicio"</strong>';
-        setTimeout(() => {
-          spanErrores.innerHTML = "";
-        }, 3000)
-      } else {
-        btnDescargar.innerHTML = "<p>Descargando...</p>";
-        fetch(`/order?fechaInicio=${formateador(inputFechaInicio.value)}&fechaFin=${formateador(inputFechaFin.value)}&sede=${sectorId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            // Manejar la respuesta del servicio
-            const workbook = xlsx.utils.book_new();
-            const worksheet = xlsx.utils.json_to_sheet(data);
-            xlsx.utils.book_append_sheet(workbook, worksheet, `Ordenes`);
-            console.log(sector.value)
-            xlsx.writeFile(workbook, `Ordenes_${sectorName}_entre_${inputFechaInicio.value}_y_${inputFechaFin.value}.xlsx`);
-            btnDescargar.innerHTML = "Descargar Excel <span class='fas fa-download'></span>";
-            inputFechaInicio.value = null
-            inputFechaFin.value = null
-            sector.selectedIndex = 0
-          })
-          .catch((error) => {
-            spanErrores.innerHTML = error
-          });
+        return data;
       }
-    });
+      function cambiarEstado(estado) {
+        estadoInforme = estado;
+      }
+
+      btnEjecucion.addEventListener("click", (e) => {
+        btnEjecucion.className += " border-b-2 border-[#009999]";
+        btnConsumo.className =
+          "text-center p-3 w-full cursor-pointer hover:bg-[#009999] hover:text-white transition duration-400 rounded-t";
+        cambiarEstado(true);
+      });
+      btnConsumo.addEventListener("click", (e) => {
+        btnConsumo.className += " border-b-2 border-[#009999]";
+        btnEjecucion.className =
+          "text-center p-3 w-full cursor-pointer hover:bg-[#009999] hover:text-white transition duration-400 rounded-t";
+        cambiarEstado(false);
+      });
+
+      formulario.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const inicio = new Date(inputFechaInicio.value);
+        const fin = new Date(inputFechaFin.value);
+        const [sectorId, sectorName] = sector.value.split("-");
+
+        if (
+          fin < inicio ||
+          fin == "Invalid Date" ||
+          inicio == "Invalid Date" ||
+          sector == ""
+        ) {
+          spanErrores.innerHTML =
+            'La <strong>"Fecha Fin"</strong> no puede ser menor a la <strong>"Fecha Inicio"</strong>';
+          setTimeout(() => {
+            spanErrores.innerHTML = "";
+          }, 3000);
+        } else {
+          btnDescargar.innerHTML = "<p>Descargando...</p>";
+          if (estadoInforme) {
+            fetch(
+              `/order?fechaInicio=${formateador(
+                inputFechaInicio.value
+              )}&fechaFin=${formateador(inputFechaFin.value)}&sede=${sectorId}`,
+              {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            )
+              .then((response) => response.json())
+              .then((data) => {
+                // Manejar la respuesta del servicio
+                const workbook = xlsx.utils.book_new();
+                const worksheet = xlsx.utils.json_to_sheet(data);
+                xlsx.utils.book_append_sheet(workbook, worksheet, `Ordenes`);
+                xlsx.writeFile(
+                  workbook,
+                  `Ordenes_${sectorName}_entre_${inputFechaInicio.value}_y_${inputFechaFin.value}.xlsx`
+                );
+                btnDescargar.innerHTML =
+                  "Descargar Excel <span class='fas fa-download'></span>";
+                inputFechaInicio.value = null;
+                inputFechaFin.value = null;
+                sector.selectedIndex = 0;
+              })
+              .catch((error) => {
+                spanErrores.innerHTML = error;
+              });
+          } else {
+            fetch(
+              `/order/consumer?fechaInicio=${formateador(
+                inputFechaInicio.value
+              )}&fechaFin=${formateador(inputFechaFin.value)}&sede=${sectorId}`,
+              {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            )
+              .then((response) => response.json())
+              .then((data) => {
+                const workbook = xlsx.utils.book_new();
+                const worksheet = xlsx.utils.json_to_sheet(data);
+                xlsx.utils.book_append_sheet(workbook, worksheet, `Ordenes`);
+                xlsx.writeFile(
+                  workbook,
+                  `Ordenes_${sectorName}_entre_${inputFechaInicio.value}_y_${inputFechaFin.value}.xlsx`
+                );
+                btnDescargar.innerHTML =
+                  "Descargar Excel <span class='fas fa-download'></span>";
+                inputFechaInicio.value = null;
+                inputFechaFin.value = null;
+                sector.selectedIndex = 0;
+              })
+              .catch((error) => {
+                spanErrores.innerHTML = error;
+              });
+          }
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
