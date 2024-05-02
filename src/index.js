@@ -1,6 +1,7 @@
 import express from "express";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { config } from "./config/index.js";
 import { routerApi } from "./routes/index.js";
 
 const app = express();
@@ -15,6 +16,6 @@ app.use(express.static(join(__dirname, "/public")));
 
 routerApi(app);
 
-app.listen(3000, () => {
+app.listen(config.port, () => {
   console.log(`Server on port 3000`);
 });
