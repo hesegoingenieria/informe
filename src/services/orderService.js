@@ -91,9 +91,9 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
     ) AS subconsulta
     ON b.codigo_orden = subconsulta.codigo_orden
     where
-        b.sector_id = 9 and
-        to_char(b.fecha_inicio,'YYYY/MM/DD')>='2024/03/21' and
-        to_char(b.fecha_inicio,'YYYY/MM/DD') <='2024/03/21' and  
+        b.sector_id = ${sede} and
+        to_char(b.fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' and
+        to_char(b.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' and  
       c.default_code not in ('16134', '16135')
     order by b.codigo_orden ASC;
   `);
@@ -158,9 +158,9 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
   ) AS subconsulta
   ON b.codigo_orden = subconsulta.codigo_orden
   where
-    b.sector_id = 9 and
-    to_char(b.fecha_inicio,'YYYY/MM/DD')>='2024/03/21' and
-    to_char(b.fecha_inicio,'YYYY/MM/DD') <='2024/03/21' and  
+    b.sector_id = ${sede} and
+    to_char(b.fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' and
+    to_char(b.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' and  
     c.default_code not in ('16134', '16135')
   order by b.codigo_orden ASC;
   `);
