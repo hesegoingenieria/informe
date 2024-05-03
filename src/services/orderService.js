@@ -84,9 +84,9 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
     inner join product_product f on d.producto_id = f.id 
     inner join product_template g on f.product_tmpl_id = g.id
     where 
-      to_char(e.fecha_inicio,'YYYY/MM/DD')>='2024/03/27' and
-      to_char(e.fecha_inicio,'YYYY/MM/DD') <='2024/03/27}' and 
-      e.sector_id = 9 and
+      to_char(e.fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' and
+      to_char(e.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' and 
+      e.sector_id = ${sede} and
       f.default_code not in ('16134', '16135')
   ) AS subconsulta
   ON b.codigo_orden = subconsulta.codigo_orden
@@ -146,9 +146,9 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
     inner join product_product f on d.producto_id = f.id 
     inner join product_template g on f.product_tmpl_id = g.id
     where 
-      to_char(e.fecha_inicio,'YYYY/MM/DD')>='2024/03/27' and
-      to_char(e.fecha_inicio,'YYYY/MM/DD') <='2024/03/27}' and 
-      e.sector_id = 9 and
+      to_char(e.fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' and
+      to_char(e.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' and 
+      e.sector_id = ${sede} and
       f.default_code not in ('16134', '16135')
   ) AS subconsulta
   ON b.codigo_orden = subconsulta.codigo_orden
