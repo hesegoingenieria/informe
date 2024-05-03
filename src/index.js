@@ -17,5 +17,5 @@ app.use(express.static(join(__dirname, "/public")));
 routerApi(app);
 
 app.listen(config.port, () => {
-  console.log(`Server on port 3000`);
+  console.log(`Server on port ${config.port}`);
 });
