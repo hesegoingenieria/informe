@@ -52,7 +52,7 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
   `); */
   const ordersSeriado = await sequelize.query(`
   SELECT 
-    to_char(b.fecha_inicio, 'DD/MM/YYYY'),
+    to_char(b.fecha_inicio, 'DD/MM/YYYY') as fecha_ejecucion,
     CASE WHEN 
       subconsulta.numero_serie IS NULL 
       THEN b.codigo_orden 
