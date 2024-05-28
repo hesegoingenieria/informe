@@ -53,7 +53,7 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
   LEFT JOIN (
     SELECT
       e.codigo_orden,
-      d.numero_serie,
+      d.numero_serie
     FROM  hsg_orden_seriados d
     INNER JOIN hsg_orden e ON d.orden_id = e.id
     INNER JOIN product_product f ON d.producto_id = f.id
@@ -93,7 +93,7 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
   LEFT JOIN (
     SELECT
       e.codigo_orden,
-      d.numero_serie,
+      d.numero_serie
     FROM  hsg_orden_seriados d
     INNER JOIN hsg_orden e ON d.orden_id = e.id
     INNER JOIN product_product f ON d.producto_id = f.id
