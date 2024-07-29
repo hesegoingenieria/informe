@@ -15,8 +15,22 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+    />
     <title>Informe de Ejecución</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      $(document).ready(() => {
+        $("#sector").select2({
+          placeholder: "-- SELECCIONE UNA O VARIAS SEDES --",
+          allowClear: true,
+        });
+      });
+    </script>
   </head>
   <body class="flex flex-col min-h-screen sm:px-20 lg:px-52 xl:px-80">
     <%- include('partials/header.ejs') %>
@@ -35,25 +49,93 @@
     </style>
     <script type="module">
       import xlsx from "https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs";
-      const inputFechaInicio = document.getElementById("fecha_inicio");
-      const inputFechaFin = document.getElementById("fecha_fin");
-      const sector = document.getElementById("sector");
+
       const formulario = document.getElementById("formulario");
+      const inputFechaInicio = document.getElementById("fechaInicio");
+      const inputFechaFin = document.getElementById("fechaFin");
+      const sector = document.getElementById("sector");
       const btnDescargar = document.getElementById("descargar");
       const spanErrores = document.getElementById("errores");
 
-      let estadoInforme = true;
       const btnEjecucion = document.getElementById("btn-ejecucion");
       const btnConsumo = document.getElementById("btn-consumo");
 
-      function formateador(fecha) {
-        const data = fecha.split("-").join("/");
+      let estadoInforme = true;
 
-        return data;
+      function generarArchivo(data, formData) {
+        const workbook = xlsx.utils.book_new();
+        const worksheet = xlsx.utils.json_to_sheet(data);
+        xlsx.utils.book_append_sheet(workbook, worksheet, `Ordenes`);
+        xlsx.writeFile(
+          workbook,
+          `${estadoInforme ? "Ejecucion" : "Consumo"}_${formData
+            .getAll("sector")
+            .map((s) => `${s.split("-")[1]}`)}_entre_${
+            inputFechaInicio.value
+          }_y_${inputFechaFin.value}.xlsx`
+        );
       }
+
       function cambiarEstado(estado) {
         estadoInforme = estado;
       }
+
+      function mostrarError(errorMsg) {
+        spanErrores.innerHTML = errorMsg;
+        setTimeout(() => {
+          spanErrores.innerHTML = "";
+        }, 3000);
+        limpiarFormulario();
+      }
+
+      function limpiarFormulario() {
+        btnDescargar.innerHTML =
+          "Descargar Excel <span class='fas fa-download'></span>";
+        inputFechaInicio.value = null;
+        inputFechaFin.value = null;
+        $("#sector").val(null).trigger("change");
+      }
+
+      formulario.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (inputFechaFin.value < inputFechaInicio.value) {
+          mostrarError(
+            'La <strong>"Fecha Fin"</strong> no puede ser menor a la <strong>"Fecha Inicio"</strong>'
+          );
+        } else {
+          btnDescargar.innerHTML = "<p>Descargando...</p>";
+          const formData = new FormData(e.target);
+
+          if (estadoInforme) {
+            fetch("/order", {
+              method: "POST",
+              body: formData,
+            })
+              .then((data) => data.json())
+              .then((data) => {
+                generarArchivo(data, formData);
+                limpiarFormulario();
+              })
+              .catch((err) => {
+                mostrarError(err);
+              });
+          } else {
+            fetch("/order/consumer", {
+              method: "POST",
+              body: formData,
+            })
+              .then((data) => data.json())
+              .then((data) => {
+                generarArchivo(data, formData);
+                limpiarFormulario();
+              })
+              .catch((err) => {
+                mostrarError(err);
+              });
+          }
+        }
+      });
 
       btnEjecucion.addEventListener("click", (e) => {
         btnEjecucion.className += " border-b-2 border-[#009999]";
@@ -61,95 +143,12 @@
           "text-center p-3 w-full cursor-pointer hover:bg-[#009999] hover:text-white transition duration-400 rounded-t";
         cambiarEstado(true);
       });
+
       btnConsumo.addEventListener("click", (e) => {
         btnConsumo.className += " border-b-2 border-[#009999]";
         btnEjecucion.className =
           "text-center p-3 w-full cursor-pointer hover:bg-[#009999] hover:text-white transition duration-400 rounded-t";
         cambiarEstado(false);
-      });
-
-      formulario.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const inicio = new Date(inputFechaInicio.value);
-        const fin = new Date(inputFechaFin.value);
-        const [sectorId, sectorName] = sector.value.split("-");
-
-        if (
-          fin < inicio ||
-          fin == "Invalid Date" ||
-          inicio == "Invalid Date" ||
-          sector == ""
-        ) {
-          spanErrores.innerHTML =
-            'La <strong>"Fecha Fin"</strong> no puede ser menor a la <strong>"Fecha Inicio"</strong>';
-          setTimeout(() => {
-            spanErrores.innerHTML = "";
-          }, 3000);
-        } else {
-          btnDescargar.innerHTML = "<p>Descargando...</p>";
-          if (estadoInforme) {
-            fetch(
-              `/order?fechaInicio=${formateador(
-                inputFechaInicio.value
-              )}&fechaFin=${formateador(inputFechaFin.value)}&sede=${sectorId}`,
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              }
-            )
-              .then((response) => response.json())
-              .then((data) => {
-                // Manejar la respuesta del servicio
-                const workbook = xlsx.utils.book_new();
-                const worksheet = xlsx.utils.json_to_sheet(data);
-                xlsx.utils.book_append_sheet(workbook, worksheet, `Ordenes`);
-                xlsx.writeFile(
-                  workbook,
-                  `Ejecucion_${sectorName}_entre_${inputFechaInicio.value}_y_${inputFechaFin.value}.xlsx`
-                );
-                btnDescargar.innerHTML =
-                  "Descargar Excel <span class='fas fa-download'></span>";
-                inputFechaInicio.value = null;
-                inputFechaFin.value = null;
-                sector.selectedIndex = 0;
-              })
-              .catch((error) => {
-                spanErrores.innerHTML = error;
-              });
-          } else {
-            fetch(
-              `/order/consumer?fechaInicio=${formateador(
-                inputFechaInicio.value
-              )}&fechaFin=${formateador(inputFechaFin.value)}&sede=${sectorId}`,
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              }
-            )
-              .then((response) => response.json())
-              .then((data) => {
-                const workbook = xlsx.utils.book_new();
-                const worksheet = xlsx.utils.json_to_sheet(data);
-                xlsx.utils.book_append_sheet(workbook, worksheet, `Ordenes`);
-                xlsx.writeFile(
-                  workbook,
-                  `Consumo_${sectorName}_entre_${inputFechaInicio.value}_y_${inputFechaFin.value}.xlsx`
-                );
-                btnDescargar.innerHTML =
-                  "Descargar Excel <span class='fas fa-download'></span>";
-                inputFechaInicio.value = null;
-                inputFechaFin.value = null;
-                sector.selectedIndex = 0;
-              })
-              .catch((error) => {
-                spanErrores.innerHTML = error;
-              });
-          }
-        }
       });
     </script>
   </body>

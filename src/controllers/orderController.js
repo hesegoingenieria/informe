@@ -1,25 +1,23 @@
-import xlsx from "xlsx";
-import fs from "fs";
 import { find, findByConsumer } from "../services/orderService.js";
 
-export const findOrdersInRange = async (req, res) => {
+export const findOrdersInRange = async (req, res, next) => {
   try {
-    const { fechaInicio, fechaFin, sede } = req.query;
-    const data = await find(fechaInicio, fechaFin, sede);
+    const { fechaInicio, fechaFin, sector } = req.body;
+    const data = await find(fechaInicio, fechaFin, sector);
 
     res.json(data);
   } catch (err) {
-    console.log(err);
+    next(err);
   }
 };
 
-export const findOrdersInRangeConsumer = async (req, res) => {
+export const findOrdersInRangeConsumer = async (req, res, next) => {
   try {
-    const { fechaInicio, fechaFin, sede } = req.query;
-    const data = await findByConsumer(fechaInicio, fechaFin, sede);
+    const { fechaInicio, fechaFin, sector } = req.body;
+    const data = await findByConsumer(fechaInicio, fechaFin, sector);
 
     res.json(data);
   } catch (err) {
-    console.log(err);
+    next(err);
   }
 };

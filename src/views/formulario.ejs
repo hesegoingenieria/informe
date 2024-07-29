@@ -1,17 +1,16 @@
 <form id="formulario" class="flex flex-col items-center gap-5">
   <div class="w-[450px] gap-5 max-sm:w-[300px]">
     <div class="flex justify-between items-center gap-2">
-      <label class="text-nowrap">Fecha inicio: </label>
-      <input id="fecha_inicio" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required />
+      <label for="fechaInicio" class="text-nowrap">Fecha inicio: </label>
+      <input id="fechaInicio" name="fechaInicio" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required />
     </div>
     <div class="flex justify-between items-center gap-2 mt-3">
-      <label class="text-nowrap">Fecha fin: </label>
-      <input id="fecha_fin" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required />
+      <label for="fechaFin" class="text-nowrap">Fecha fin: </label>
+      <input id="fechaFin" name="fechaFin" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required />
     </div>
     <div class="flex justify-between items-center gap-2 mt-3">
-      <label class="text-nowrap">Sede: </label>
-      <select id="sector" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" type="date" required>
-        <option selected value="" disabled>-- SELECCIONE UNA SEDE --</option>
+      <label for="sector" class="text-nowrap">Sede: </label>
+      <select id="sector" name="sector" class="bg-white border border-stone-200 rounded p-1 w-[350px] max-sm:w-[200px]" required multiple>
         <% sectores.map((option) => { %>
           <option
             value=<%- option.id + "-" + option.name %>

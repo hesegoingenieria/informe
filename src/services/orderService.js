@@ -19,10 +19,14 @@ export const find = async (fechaInicio, fechaFin, sede) => {
   LEFT JOIN hsg_sector e ON b.sector_id = e.id
   LEFT JOIN hsg_brigadas f ON b.brigada_id = f.id
   WHERE
-    to_char(fecha_inicio,'YYYY/MM/DD')>='${fechaInicio}' AND
-    to_char(fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' AND
-    e.id = ${sede}
-  order by fecha_inicio asc;
+    to_char(fecha_inicio,'YYYY-MM-DD')>='${fechaInicio}' AND
+    to_char(fecha_inicio,'YYYY-MM-DD') <='${fechaFin}' AND
+    e.id IN (${
+      Array.isArray(sede)
+        ? sede.map((value) => `${value.split("-")[0]}`)
+        : sede.split("-")[0]
+    })
+  order by sector asc, fecha_inicio asc;
   `);
 
   return orders[0];
@@ -62,11 +66,15 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
     ) AS subconsulta
   ON b.codigo_orden = subconsulta.codigo_orden
   WHERE
-    b.sector_id = ${sede} AND
-    to_char(b.fecha_inicio,'YYYY/MM/DD') >='${fechaInicio}' AND
-    to_char(b.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' AND
+    b.sector_id IN (${
+      Array.isArray(sede)
+        ? sede.map((value) => `${value.split("-")[0]}`)
+        : sede.split("-")[0]
+    }) AND
+    to_char(b.fecha_inicio,'YYYY-MM-DD') >='${fechaInicio}' AND
+    to_char(b.fecha_inicio,'YYYY-MM-DD') <='${fechaFin}' AND
     c.default_code not in ('16134', '16135')
-  ORDER BY b.codigo_orden ASC;
+  ORDER BY b.codigo_orden ASC, sector ASC;
   `);
 
   const ordersNoSeriado = await sequelize.query(`
@@ -102,11 +110,15 @@ export const findByConsumer = async (fechaInicio, fechaFin, sede) => {
   ) AS subconsulta
   ON b.codigo_orden = subconsulta.codigo_orden
   WHERE
-    b.sector_id = ${sede} AND
-    to_char(b.fecha_inicio,'YYYY/MM/DD') >='${fechaInicio}' AND
-    to_char(b.fecha_inicio,'YYYY/MM/DD') <='${fechaFin}' AND
+    b.sector_id IN (${
+      Array.isArray(sede)
+        ? sede.map((value) => `${value.split("-")[0]}`)
+        : sede.split("-")[0]
+    }) AND
+    to_char(b.fecha_inicio,'YYYY-MM-DD') >='${fechaInicio}' AND
+    to_char(b.fecha_inicio,'YYYY-MM-DD') <='${fechaFin}' AND
     c.default_code NOT IN ('16134', '16135')
-  ORDER BY b.codigo_orden ASC;
+  ORDER BY b.codigo_orden ASC , sector ASC;
   `);
 
   const data = ordersSeriado[0].concat(ordersNoSeriado[0]);
